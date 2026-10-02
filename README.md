@@ -1,39 +1,42 @@
 # DSH Model Reasoning Settings
 
-A user-friendly DSH Bundle for configuring default reasoning levels on third-party model routes, starting with `llm-pi-ai`.
+[中文说明](README.zh.md)
 
-**Status:** Initial Bundle implementation. It has static smoke coverage but has not yet been validated in a running DSH Desktop installation.
+A DSH Bundle that adds visual reasoning-level configuration for third-party models (`llm-pi-ai` routes) — no YAML editing required.
 
-## What the first version does
+Verified in a running DSH Desktop installation (`0.2.0-rc.2` release line).
 
-- Adds a **Default reasoning level** control to `llm-pi-ai` provider cards in **Settings → Models**.
-- Persists the route default through DSH's Settings Remote, rather than asking users to edit YAML.
-- Lets manually configured models declare **High** reasoning support and adjust its wire value (default: `high`).
-- Does **not** override a reasoning level explicitly selected for an existing session.
+## Features
 
-## Install in DSH Desktop
+- **Chips inside the provider editor**: Settings → Models → edit a third-party provider, expand 自定义设置, and every model entry shows a row of toggle chips: **None / Medium / High / XHigh / Max**.
+- **Tap to declare, tap again to remove.** The wire value defaults to the level name (High → `high`); None clears the model's whole declaration.
+- **New models work immediately**: chips on unsaved drafts are selectable and are written to the model when you save the provider.
+- **Effort survives model switches**: once you pick a level in a session, switching models re-applies it whenever the target model supports that level; picking Default explicitly clears the memory.
+- Configuration goes through DSH's Settings Remote with revision protection — API keys and existing sessions' explicit picks are never touched.
 
-This project is designed for the DSH release line represented by the `0.2.0-rc.2` upstream source checkout.
+## Install
 
-1. Open the **Plugins** page in the DSH Desktop sidebar and choose **Add plugin**.
-2. Paste this Git URL:
+1. In DSH Desktop, open the **Plugins** page and choose **Add plugin**.
+2. Paste:
 
    ```text
    https://github.com/JuZiool/dsh-model-reasoning-settings.git
    ```
 
-3. Install it, then choose **Enable now**.
-4. Open **Settings → Models**, expand a third-party (`llm-pi-ai`) provider card, and set the default reasoning level.
-5. For manually entered models, enable **High** reasoning support and confirm that the provider accepts the `high` wire value (or replace it with the value your gateway requires).
+3. Install, enable, and restart DSH if prompted.
+4. Open **Settings → Models**, edit your third-party (`llm-pi-ai`) provider, and expand 自定义设置.
 
-If installation reports that DSH must restart, restart it before checking the Models page. Do not enable a level your gateway/model does not support.
+## Notes
+
+- Wire values default to the level name; if your gateway needs a different spelling, edit the `reasoningEfforts` values in your profile patch file directly.
+- Only declare levels your provider actually supports — DSH validates before dispatch.
+- Keeping the effort across switches is a client-side memory: after an app restart the first switch falls back to per-model defaults until you pick a level once.
 
 ## Development
 
 ```powershell
-npm test
-npm run check
-npm pack --dry-run --json
+npm run check   # syntax check for index.js / client.js
+npm test        # smoke tests
 ```
 
-See [the development plan](docs/DEVELOPMENT.md) for the confirmed extension points, configuration semantics, and acceptance criteria.
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the extension-point research and configuration semantics.
