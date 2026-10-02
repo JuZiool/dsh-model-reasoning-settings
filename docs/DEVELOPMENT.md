@@ -1,6 +1,6 @@
 # DSH 第三方模型思考等级插件：开发文档
 
-- **状态：** 技术方案，尚未实现
+- **状态：** 初始 Bundle 已实现；尚未在运行中的 DSH Desktop 中完成端到端验证
 - **编写日期：** 2026-10-02
 - **上游项目：** [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)
 - **首期范围：** DSH 的 `llm-pi-ai` 第三方模型路由
@@ -99,7 +99,13 @@ dsh-thinking-levels/
 - 不覆盖密钥、其他路由或已有模型字段；不强制更改用户已有会话的等级。
 - `client.js` 语法检查通过；Bundle manifest 与 patch 校验通过；安装后在 DSH 实际模型设置页完成交互验证。
 
-## 9. 仓库依据
+## 9. 当前实现进度
+
+当前仓库已包含可安装 Bundle 的首版骨架：清单、Profile patch、空 Host half、Models 设置页 Client 扩展、双语展示信息及 Node 静态 smoke test。首版可设置路由默认等级，并可为手动配置模型声明/修改 `high` 的 wire 映射。
+
+仍待完成：在实际 DSH Desktop 中通过插件管理器安装 Bundle，验证设置页渲染、配置持久化和模型选择器是否显示新增等级。
+
+## 10. 仓库依据
 
 当前设计依据克隆仓库中的以下文件，实施前应再次核对目标 DSH 版本：
 

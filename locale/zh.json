@@ -1,0 +1,29 @@
+{
+  "meta": {
+    "title": "第三方模型思考等级",
+    "description": "在模型设置页配置第三方模型的默认思考等级。"
+  },
+  "defaultLabel": "默认思考等级",
+  "defaultHelp": "新会话在没有单独选择等级时使用此值。仅对模型支持的等级生效。",
+  "inherit": "沿用提供商默认",
+  "off": "关闭思考",
+  "minimal": "Minimal",
+  "low": "Low",
+  "medium": "Medium",
+  "high": "High（推荐）",
+  "xhigh": "XHigh",
+  "max": "Max",
+  "manualModels": "手动配置的模型",
+  "modelHelp": "开启后，模型选择器会提供 High 等级。接口值默认是 high；请确认提供商支持，必要时修改。",
+  "enableHigh": "声明支持 High 思考等级",
+  "wireValue": "接口等级值",
+  "loading": "正在读取模型配置…",
+  "saving": "正在保存…",
+  "saved": "已保存",
+  "readOnly": "当前配置不可写。",
+  "unconfigured": "请先保存提供商配置，再设置思考等级。",
+  "noModels": "此路由使用提供商模型目录；等级能力由目录提供。",
+  "loadError": "读取设置失败：{message}",
+  "saveError": "保存失败：{message}",
+  "emptyWireValue": "接口等级值不能为空。"
+}

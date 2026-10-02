@@ -1,0 +1,29 @@
+{
+  "meta": {
+    "title": "Third-party model reasoning levels",
+    "description": "Configure default reasoning levels on the Models settings page."
+  },
+  "defaultLabel": "Default reasoning level",
+  "defaultHelp": "Used for new sessions when no level is selected explicitly. Only supported model levels work.",
+  "inherit": "Use provider default",
+  "off": "Thinking off",
+  "minimal": "Minimal",
+  "low": "Low",
+  "medium": "Medium",
+  "high": "High (recommended)",
+  "xhigh": "XHigh",
+  "max": "Max",
+  "manualModels": "Manually configured models",
+  "modelHelp": "Enabling this adds High to the model selector. The wire value defaults to high; confirm your provider supports it or change it.",
+  "enableHigh": "Declare High reasoning support",
+  "wireValue": "Provider wire value",
+  "loading": "Reading model settings…",
+  "saving": "Saving…",
+  "saved": "Saved",
+  "readOnly": "The current profile is read-only.",
+  "unconfigured": "Save the provider first, then configure reasoning levels.",
+  "noModels": "This route uses the provider model catalog; model capabilities come from that catalog.",
+  "loadError": "Could not read settings: {message}",
+  "saveError": "Could not save: {message}",
+  "emptyWireValue": "The provider wire value cannot be empty."
+}

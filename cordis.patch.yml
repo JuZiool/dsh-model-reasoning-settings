@@ -1,0 +1,4 @@
+- insert:
+    - id: dsh-model-reasoning-settings
+      name: '@local/dsh-model-reasoning-settings'
+      config: {}

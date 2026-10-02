@@ -1,0 +1,41 @@
+{
+  "name": "@local/dsh-model-reasoning-settings",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Configure third-party model reasoning levels in the DSH Models settings page.",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json"
+  ],
+  "meta": {
+    "title": "DSH Model Reasoning Settings",
+    "description": "Configure default reasoning levels for third-party model routes."
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-settings-models",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-api-remotes"
+      ]
+    }
+  },
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check index.js && node --check client.js"
+  }
+}
