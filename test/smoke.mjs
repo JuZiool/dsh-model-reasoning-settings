@@ -202,6 +202,10 @@ test('Models card writes the provider default and manual-model high mapping thro
   await settle()
   tree = render(Component, props)
 
+  const modelName = elements(tree, element => element.type === 'strong')[0]
+  assert.ok(modelName)
+  assert.equal(modelName.props.children[0], 'acme-think')
+
   const selector = elements(tree, element => element.type === 'select')[0]
   assert.ok(selector)
   selector.props.onChange({ target: { value: 'high' } })

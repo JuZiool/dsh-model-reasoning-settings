@@ -217,6 +217,7 @@ window.__ModuleLoader__.load({
           key,
           style: { borderTop: '1px solid currentColor', display: 'grid', gap: 6, padding: '8px 0' },
         },
+          h('strong', null, model.label),
           h('label', { style: { alignItems: 'center', display: 'flex', gap: 8 } },
             h('input', {
               type: 'checkbox',
