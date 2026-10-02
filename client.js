@@ -265,7 +265,6 @@ window.__ModuleLoader__.load({
     return {
       inject: ['slots', 'remote.settings', 'locale'],
       apply(ctx) {
-        const t = ctx.locale.bind(NS);
         ctx.effect(() => ctx.locale.register(NS, DICTIONARIES), 'dsh-model-reasoning-settings: locales');
         ctx.slots.inject('settings.models.provider-card', () => ctx.slots.register({
           name: 'settings.models.provider-card',

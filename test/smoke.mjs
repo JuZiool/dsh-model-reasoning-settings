@@ -122,10 +122,6 @@ test('bundle manifest, host entry, and client registration are loadable', async 
       return callback()
     },
     locale: {
-      bind(namespace) {
-        calls.push(['bind', namespace])
-        return t
-      },
       register(namespace, dictionaries) {
         calls.push(['register', namespace, dictionaries])
         return () => {}
