@@ -175,7 +175,7 @@ window.__ModuleLoader__.load({
           ? { ...current }
           : {};
         if (enabled) {
-          const wire = (wireValue || 'high').trim();
+          const wire = (wireValue === undefined ? 'high' : wireValue).trim();
           if (!wire) {
             setError(t('emptyWireValue'));
             return;

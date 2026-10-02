@@ -227,3 +227,63 @@ test('Models card writes the provider default and manual-model high mapping thro
     revision: 7,
   })
 })
+
+
+test('manual-model wire mapping rejects an empty value instead of silently restoring high', async () => {
+  const view = {
+    ns: 'llm-pi-ai',
+    revision: 11,
+    value: {
+      providers: {
+        acme: {
+          models: [{ id: 'acme-think', reasoningEfforts: { off: null, high: 'high' } }],
+        },
+      },
+    },
+  }
+  const calls = []
+  const settings = {
+    async describe() {
+      return { ok: true, value: { writable: true, namespaces: [view] } }
+    },
+    async mutate(...args) {
+      calls.push(args)
+      return { ok: true, value: view }
+    },
+  }
+  const { react, render } = createReactHarness()
+  const { client } = await loadClient(react)
+  let Component
+  client.apply({
+    effect: callback => callback(),
+    locale: { register: () => () => {} },
+    remote: { settings },
+    slots: {
+      inject: (_slot, callback) => callback(),
+      register: (_options, component) => { Component = component; return () => {} },
+    },
+  })
+  const props = {
+    provider: { provider: 'acme', settingsNs: 'llm-pi-ai' },
+    configured: true,
+    settings,
+    t: key => key,
+  }
+  let tree = render(Component, props)
+  await settle()
+  tree = render(Component, props)
+
+  let wireInput = elements(tree, element => element.type === 'input' && element.props.type === 'text')[0]
+  assert.ok(wireInput)
+  wireInput.props.onChange({ target: { value: '' } })
+  tree = render(Component, props)
+  wireInput = elements(tree, element => element.type === 'input' && element.props.type === 'text')[0]
+  wireInput.props.onBlur()
+  await settle()
+  tree = render(Component, props)
+
+  assert.equal(calls.length, 0)
+  const alerts = elements(tree, element => element.props?.role === 'alert')
+  assert.equal(alerts.length, 1)
+  assert.equal(alerts[0].props.children[0], 'emptyWireValue')
+})
