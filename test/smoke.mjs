@@ -4,6 +4,91 @@ import { test } from 'node:test'
 import vm from 'node:vm'
 import { pathToFileURL } from 'node:url'
 
+
+function dependenciesEqual(left, right) {
+  return Array.isArray(left) && Array.isArray(right)
+    && left.length === right.length && left.every((value, index) => Object.is(value, right[index]))
+}
+
+function createReactHarness() {
+  const hooks = []
+  let cursor = 0
+  let pendingEffects = []
+
+  const react = {
+    createElement(type, props, ...children) {
+      return { type, props: { ...(props ?? {}), children } }
+    },
+    useState(initial) {
+      const index = cursor++
+      if (!Object.hasOwn(hooks, index)) hooks[index] = { value: typeof initial === 'function' ? initial() : initial }
+      const setValue = next => {
+        hooks[index].value = typeof next === 'function' ? next(hooks[index].value) : next
+      }
+      return [hooks[index].value, setValue]
+    },
+    useCallback(callback, dependencies) {
+      const index = cursor++
+      const previous = hooks[index]
+      if (previous === undefined || !dependenciesEqual(previous.dependencies, dependencies)) {
+        hooks[index] = { callback, dependencies }
+      }
+      return hooks[index].callback
+    },
+    useEffect(effect, dependencies) {
+      const index = cursor++
+      const previous = hooks[index]
+      if (previous === undefined || !dependenciesEqual(previous.dependencies, dependencies)) {
+        pendingEffects.push({ index, effect, cleanup: previous?.cleanup })
+        hooks[index] = { dependencies, cleanup: previous?.cleanup }
+      }
+    },
+  }
+
+  return {
+    react,
+    render(Component, props) {
+      cursor = 0
+      const tree = Component(props)
+      const effects = pendingEffects
+      pendingEffects = []
+      for (const entry of effects) {
+        entry.cleanup?.()
+        hooks[entry.index].cleanup = entry.effect()
+      }
+      return tree
+    },
+  }
+}
+
+function elements(node, predicate, result = []) {
+  if (Array.isArray(node)) {
+    for (const child of node) elements(child, predicate, result)
+    return result
+  }
+  if (node === null || typeof node !== 'object' || !('type' in node)) return result
+  if (predicate(node)) result.push(node)
+  elements(node.props?.children, predicate, result)
+  return result
+}
+
+async function settle() {
+  await new Promise(resolve => setImmediate(resolve))
+  await new Promise(resolve => setImmediate(resolve))
+}
+
+async function loadClient(react) {
+  let definition
+  const clientSource = await readFile('client.js', 'utf8')
+  vm.runInNewContext(clientSource, {
+    window: { __ModuleLoader__: { load: value => { definition = value } } },
+  }, { filename: 'client.js' })
+  return { definition, client: definition.factory(moduleName => {
+    assert.equal(moduleName, 'react')
+    return react
+  }) }
+}
+
 test('bundle manifest, host entry, and client registration are loadable', async () => {
   const manifest = JSON.parse(await readFile('package.json', 'utf8'))
   assert.equal(manifest.name, '@local/dsh-model-reasoning-settings')
@@ -23,18 +108,9 @@ test('bundle manifest, host entry, and client registration are loadable', async 
   const host = await import(pathToFileURL(`${process.cwd()}/index.js`).href)
   assert.equal(typeof host.apply, 'function')
 
-  let definition
-  const clientSource = await readFile('client.js', 'utf8')
-  vm.runInNewContext(clientSource, {
-    window: { __ModuleLoader__: { load: value => { definition = value } } },
-  }, { filename: 'client.js' })
+  const { definition, client } = await loadClient({ createElement() {} })
   assert.equal(definition.id, manifest.name)
   assert.equal(typeof definition.factory, 'function')
-
-  const client = definition.factory(moduleName => {
-    assert.equal(moduleName, 'react')
-    return { createElement() {} }
-  })
   assert.deepEqual(Array.from(client.inject), ['slots', 'remote.settings', 'locale'])
   assert.equal(typeof client.apply, 'function')
 
@@ -81,4 +157,77 @@ test('bundle manifest, host entry, and client registration are loadable', async 
   assert.equal(typeof slotCall[1].inject, 'function')
   assert.equal(slotCall[1].inject().settings, ctx.remote.settings)
   assert.equal(typeof slotCall[2], 'function')
+})
+
+
+test('Models card writes the provider default and manual-model high mapping through Settings Remote', async () => {
+  const view = {
+    ns: 'llm-pi-ai',
+    revision: 7,
+    value: {
+      providers: {
+        acme: {
+          models: [{ id: 'acme-think' }],
+        },
+      },
+    },
+  }
+  const calls = []
+  const settings = {
+    async describe() {
+      return { ok: true, value: { writable: true, namespaces: [view] } }
+    },
+    async mutate(namespace, ops, revision) {
+      calls.push({ namespace, ops: JSON.parse(JSON.stringify(ops)), revision })
+      return { ok: true, value: view }
+    },
+  }
+  const { react, render } = createReactHarness()
+  const { client } = await loadClient(react)
+  let Component
+  client.apply({
+    effect: callback => callback(),
+    locale: { bind: () => key => key, register: () => () => {} },
+    remote: { settings },
+    slots: {
+      inject: (_slot, callback) => callback(),
+      register: (_options, component) => { Component = component; return () => {} },
+    },
+  })
+  assert.equal(typeof Component, 'function')
+
+  const props = {
+    provider: { provider: 'acme', settingsNs: 'llm-pi-ai' },
+    configured: true,
+    settings,
+    t: key => key,
+  }
+  let tree = render(Component, props)
+  await settle()
+  tree = render(Component, props)
+
+  const selector = elements(tree, element => element.type === 'select')[0]
+  assert.ok(selector)
+  selector.props.onChange({ target: { value: 'high' } })
+  await settle()
+  assert.deepEqual(calls.shift(), {
+    namespace: 'llm-pi-ai',
+    ops: [{ op: 'set', path: ['providers', 'acme', 'reasoning'], value: 'high' }],
+    revision: 7,
+  })
+
+  tree = render(Component, props)
+  const checkbox = elements(tree, element => element.type === 'input' && element.props.type === 'checkbox')[0]
+  assert.ok(checkbox)
+  checkbox.props.onChange({ target: { checked: true } })
+  await settle()
+  assert.deepEqual(calls.shift(), {
+    namespace: 'llm-pi-ai',
+    ops: [{
+      op: 'set',
+      path: ['providers', 'acme', 'models', '0', 'reasoningEfforts'],
+      value: { off: null, high: 'high' },
+    }],
+    revision: 7,
+  })
 })
